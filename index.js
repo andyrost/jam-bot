@@ -1,20 +1,24 @@
-const Discord = require("discord.js");
+const fs = require("fs");
+const { Client, Collection, Intents } = require("discord.js");
 const { guildId, token, clientId } = require("./config.json");
-const ytdl = require("ytdl-core");
-const {
-  AudioPlayerStatus,
-  StreamType,
-  createAudioPlayer,
-  createAudioResource,
-  joinVoiceChannel,
-} = require("@discordjs/voice");
 
-const client = new Discord.Client({
-  intents: [
-    Discord.Intents.FLAGS.GUILDS,
-    Discord.Intents.FLAGS.GUILD_VOICE_STATES,
-  ],
+const client = new Client({
+  intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_VOICE_STATES],
 });
+
+client.commands = new Collection();
+const commandFiles = fs
+  .readdirSync("./commands")
+  .filter((file) => file.endsWith(".js"));
+
+for (const file of commandFiles) {
+  const command = require(`./commands/${file}`);
+  // Set a new item in the Collection
+  // With the key as the command name and the value as the exported module
+  client.commands.set(command.data.name, command);
+}
+
+let songQueue = [];
 
 client.once("ready", () => {
   console.log("Ready!");
@@ -28,33 +32,18 @@ client.once("disconnect", () => {
 client.on("interactionCreate", async (interaction) => {
   if (!interaction.isCommand()) return;
 
-  const { commandName } = interaction;
+  const command = client.commands.get(interaction.commandName);
 
-  if (commandName === "yo") {
-    await interaction.reply("Yo.");
-  } else if (commandName === "server") {
-    await interaction.reply(
-      `Server name: ${interaction.guild.name}\nTotal members: ${interaction.guild.memberCount}`
-    );
-  } else if (commandName === "user") {
-    await interaction.reply("User info.");
-  } else if (commandName === "play") {
-    const search = interaction.options.getString("search");
-    const connection = joinVoiceChannel({
-      channelId: interaction.member.voice.channelId,
-      guildId: interaction.guildId,
-      adapterCreator: interaction.guild.voiceAdapterCreator,
+  if (!command) return;
+
+  try {
+    await command.execute(interaction);
+  } catch (error) {
+    console.error(error);
+    await interaction.reply({
+      content: "There was an error while executing this command!",
+      ephemeral: true,
     });
-    const stream = ytdl(search, { filter: "audioonly" });
-    const resource = createAudioResource(stream, {
-      inputType: StreamType.Arbitrary,
-    });
-    const player = createAudioPlayer();
-
-    player.play(resource);
-    connection.subscribe(player);
-
-    player.on(AudioPlayerStatus.Idle, () => connection.destroy());
   }
 });
 client.login(token);
