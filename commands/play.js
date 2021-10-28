@@ -6,9 +6,11 @@ const {
   createAudioPlayer,
   createAudioResource,
   joinVoiceChannel,
+  entersState,
 } = require("@discordjs/voice");
 
 let songQueue = [];
+const player = createAudioPlayer();
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("play")
@@ -18,6 +20,14 @@ module.exports = {
     ),
   async execute(interaction) {
     const search = interaction.options.getString("search");
+    if (search == null) {
+      interaction.reply({
+        content:
+          "Please provide a link and be sure Discord recognizes it as an arguement.",
+        ephemeral: true,
+      });
+      return;
+    }
     if (interaction.member.voice.channelId) {
       const connection = joinVoiceChannel({
         channelId: interaction.member.voice.channelId,
@@ -29,9 +39,17 @@ module.exports = {
       const resource = createAudioResource(stream, {
         inputType: StreamType.Arbitrary,
       });
-      const player = createAudioPlayer();
-      connection.subscribe(player);
-      player.play(resource);
+      songQueue.push(resource);
+      if (songQueue.length == 1) {
+        interaction.reply({ content: `Playing ${search}` });
+
+        connection.subscribe(player);
+        player.play(songQueue[0]);
+      } else if (songQueue.length > 1) {
+        interaction.reply({
+          content: `Adding ${search} to queue! It is currently in spot ${songQueue.length}`,
+        });
+      }
 
       player.on("error", (error) => {
         console.error(`Error: ${error.message} Full Error: ${error}`);
@@ -47,11 +65,14 @@ module.exports = {
         console.log(
           `Audio player transitioned from ${oldState.status} to ${newState.status}`
         );
+        if (oldState.status == "playing" && newState.status == "idle") {
+          songQueue.shift();
+          if (songQueue.length > 0) {
+            player.play(songQueue[0]);
+          }
+        }
       });
-
-      interaction.reply({ content: `Playing ${search}` });
-
-      player.on(AudioPlayerStatus.Idle, () => connection.destroy());
+      player.on(AudioPlayerStatus.Idle, () => {});
     } else {
       interaction.reply({
         content: `Please join a voice channel!`,
