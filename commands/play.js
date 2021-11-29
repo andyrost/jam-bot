@@ -16,6 +16,7 @@ const player = createAudioPlayer();
 let connectionBool = false;
 console.log("Hit init");
 const linkRegex = new RegExp("(https?:\\/\\/)?youtu(.be)?(be.com)?\\/");
+let timeOutTimer;
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -69,11 +70,17 @@ module.exports = {
             player.play(songQueue[0]);
             console.log("Playing next song!");
           } else {
-            connection.destroy();
-            connectionBool = false;
-            player.removeAllListeners();
+            timeOutTimer = setTimeout(() => {
+              connection.destroy();
+              connectionBool = false;
+              player.removeAllListeners();
+            }, 300000);
           }
         });
+      }
+      if (timeOutTimer) {
+        clearTimeout(timeOutTimer);
+        timeOutTimer = undefined;
       }
 
       //Check if search is a link
