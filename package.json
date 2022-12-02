@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-	"command": "node deploy-commands.js",
-	"start" : "node index.js"
+    "command": "node deploy-commands.js",
+    "start": "node index.js"
   },
   "keywords": [],
   "author": "",
@@ -20,6 +20,11 @@
     "discord.js": "^14.7.1",
     "libsodium-wrappers": "^0.7.10",
     "node-fetch": "^3.3.0",
+    "puppeteer": "^19.3.0",
     "ytdl-core": "^4.11.2"
+  },
+  "devDependencies": {
+    "@types/node": "^18.11.10",
+    "@types/node-fetch": "^2.6.2"
   }
 }
