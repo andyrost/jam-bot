@@ -27,6 +27,10 @@ client.once("reconnecting", () => {
 client.once("disconnect", () => {
   console.log("Disconnect!");
 });
+client.on("error", async (e) => {
+	console.log("Error hit everyone panic");
+	console.warn(e);
+});
 client.on("interactionCreate", async (interaction) => {
   if (!interaction.isCommand()) return;
 
