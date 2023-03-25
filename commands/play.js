@@ -11,12 +11,16 @@ const {
 const { apiKey } = require("../config.json");
 const https = require("https");
 
-let songQueue = [];
-const player = createAudioPlayer();
+var { songQueue } = require("../index");
+const { player } = require("../index");
+//const player = createAudioPlayer();
+//let songQueue = [];
+
 let connectionBool = false;
 console.log("Hit init");
 const linkRegex = new RegExp("(https?:\\/\\/)?youtu(.be)?(be.com)?\\/");
 let timeOutTimer;
+//console.log(player);
 
 module.exports = {
   data: new SlashCommandBuilder()
